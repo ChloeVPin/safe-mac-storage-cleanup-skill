@@ -1,154 +1,231 @@
+<div align="center">
+
 # safe-mac-storage-cleanup-skill
 
-**A production-ready, safety-first macOS storage cleanup skill for AI agents** (Codex, Claude Code, Cursor, and any Agent Skills compatible tool).
+**Production-ready, safety-first macOS storage cleanup for AI agents**
 
-Unlike engagement-bait stubs, this is a fully implemented, portable, and rigorously safe tool. It **never** deletes, moves, or modifies anything without your explicit approval in the chat. It uses strict whitelists, path validation gates in helper scripts, prefers moving to Trash over permanent deletion, and is designed for conversational, step-by-step interaction with your agent of choice.
+Codex · Claude Code · Cursor · Grok · any Agent Skills–compatible tool
 
-## Why This Exists (and Why the Original Was Engagement Bait)
+<br />
 
-The original `codex-mac-storage-cleanup` had:
-- Hard-coded author paths (e.g. `/Users/francescomistero/...`)
-- Incomplete or minimally functional helpers
-- Vague safety claims without enforceable guardrails in code
-- Single-commit repo with no tests, docs, or multi-agent support
-- Risk of hallucinated dangerous `rm` commands by the agent
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-macOS-000000?style=for-the-badge&logo=apple&logoColor=white)](https://www.apple.com/macos/)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Node](https://img.shields.io/badge/Node-%3E%3D18-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-This version fixes all of that and adds real usability.
+[![Safety First](https://img.shields.io/badge/Safety-Whitelist%20%2B%20Approval-2ea44f?style=flat-square)](#safety-guarantees)
+[![Trash by Default](https://img.shields.io/badge/Default-Native%20Trash-0A66C2?style=flat-square)](#safety-guarantees)
+[![Read-only Audit](https://img.shields.io/badge/Audit-Read%20only%20first-6f42c1?style=flat-square)](#usage)
+[![Zero deps](https://img.shields.io/badge/Runtime-Zero%20Python%20deps-informational?style=flat-square)](#whats-included)
+[![npm](https://img.shields.io/badge/npx-safe--mac--storage--cleanup--skill-cb3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/safe-mac-storage-cleanup-skill)
 
-## Safety Guarantees (Non-Negotiable)
+<br />
 
-- **Read-only audit first, always.** No modifications until you approve specific items.
-- **Strict whitelist only.** Only scans and operates on known safe locations (user caches, logs, package caches, dev artifacts, Trash, temps). Never touches system roots, user documents, photos libraries, keychains, mail, iCloud, source code repos (unless explicitly whitelisted by you), or anything in `~/Documents`, `~/Desktop`, `~/Pictures`, `~/Music`, `~/Movies`, `~/Public`, or `~/Downloads` (except as optional high-caution suggestions).
-- **Path validation gate.** The cleanup script refuses any path not matching the safe whitelist or not present in a recent audit report.
-- **Trash by default.** Uses Finder to move items to Trash (recoverable). Permanent `rm` only for pure caches/logs with extra confirmation and `--permanent` flag.
-- **No sudo by default.** Avoids privilege escalation unless you explicitly approve and justify.
-- **Human + agent reviewable.** Generates both beautiful Markdown reports and machine-parseable JSON.
-- **Logged actions.** All proposed and executed cleanups are logged.
-
-**You are always in control.** Treat broad phrases like "just clean it" as approval **only** for already-listed low-risk items. The agent will ask for confirmation on anything else.
-
-## Installation (Works with Any Compatible Agent)
-
-### Option 1: npx (Recommended for Codex and quick start)
 ```bash
 npx safe-mac-storage-cleanup-skill@latest
 ```
-This installs the skill to common locations and detects your setup.
 
-### Option 2: Manual / Multi-Agent (Best for Claude Code, Cursor, etc.)
+Then tell your agent: *“My disk is full — run the safe mac storage cleanup.”*
+
+</div>
+
+---
+
+## Why this exists
+
+Most “Mac storage cleanup for agents” repos are engagement bait: incomplete helpers, hard-coded author paths, and vague safety claims that still leave the model free to invent `rm -rf`.
+
+This skill is the opposite: **portable, enforced in code, and interactive by design.**
+
+| Problem in the original | What this skill does |
+| ----------------------- | -------------------- |
+| Hard-coded paths like `/Users/francescomistero/...` | Portable paths for any user |
+| Stub or missing helpers | Full audit + validated cleanup scripts |
+| “Trust me” safety copy | Whitelist + audit JSON gate in `safe_cleanup.py` |
+| Single-commit, no multi-agent story | `SKILL.md` + install targets for major agents |
+| Agents inventing dangerous `rm` | Prefer native Trash; never suggest raw `rm` |
+
+---
+
+## Safety guarantees
+
+These are non-negotiable. The scripts enforce them; the agent is instructed to follow them.
+
+| Guarantee | Behavior |
+| --------- | -------- |
+| **Read-only audit first** | No modifications until you approve specific items |
+| **Strict whitelist only** | Caches, logs, package caches, dev artifacts, Trash, temps — not Documents, Desktop, Photos, Keychains, Mail, iCloud, or system roots |
+| **Path validation gate** | Cleanup refuses paths outside the whitelist or missing from a recent audit report |
+| **Trash by default** | Finder Trash (recoverable). Permanent delete only with extra confirmation + `--permanent` |
+| **No sudo by default** | No privilege escalation unless you explicitly approve it |
+| **Reviewable output** | Markdown report for humans + JSON for the agent |
+| **Logged actions** | Proposed and executed cleanups are logged |
+
+**You stay in control.** Phrases like “just clean it” only apply to **already-listed low-risk items** from the current audit. Everything else needs explicit path approval.
+
+---
+
+## Installation
+
+### Option 1 — npx (recommended)
+
+```bash
+npx safe-mac-storage-cleanup-skill@latest
+```
+
+Installs into common skill locations and detects your setup.
+
+### Option 2 — Manual / multi-agent
+
 ```bash
 git clone https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill.git
 cd safe-mac-storage-cleanup-skill
 
-# For Codex / agents using ~/.agents/skills or ~/.codex/skills
+# Codex / agents using ~/.agents/skills or ~/.codex/skills
 mkdir -p ~/.agents/skills/mac-storage-cleanup
 cp -r skill/* ~/.agents/skills/mac-storage-cleanup/
 
-# For Claude Code
+# Claude Code
 mkdir -p ~/.claude/skills/mac-storage-cleanup
 cp -r skill/* ~/.claude/skills/mac-storage-cleanup/
 
-# For Cursor or others (check your agent's docs for the skills dir)
-# Usually similar copy of the `skill/` folder contents
+# Cursor / Grok / others — use your agent’s skills directory
+# (same: copy the contents of skill/)
 ```
 
-The `skill/` folder is the portable standard unit (contains `SKILL.md` + helpers).
+The portable unit is the `skill/` folder (`SKILL.md` + helpers).
 
-### Option 3: Automated Bash Installer
+### Option 3 — Bash installer
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ChloeVPin/safe-mac-storage-cleanup-skill/main/install.sh | bash
 ```
-(Or run `./install.sh` after clone — it supports prompting for target agent(s).)
 
-After install, tell your agent: **"Use the mac-storage-cleanup skill"** or just say **"My disk is full, run storage cleanup"** — it should auto-discover and load `SKILL.md`.
+Or run `./install.sh` after clone (prompts for target agent(s)).
 
-## Usage (Fully Interactive)
+**After install**, say:
 
-1. **Trigger**: In chat with your agent:  
-   `"My Mac is low on storage. Run the safe mac storage cleanup."`  
-   or `"Scan for wasted space and show me what I can safely delete."`
+> Use the mac-storage-cleanup skill
 
-2. **Agent loads the skill** → runs `python3 .../scripts/storage_audit.py --output /tmp/mac-audit` (or equivalent).
+or
 
-3. **You get**:
-   - A ranked Markdown report (top wasters by category + risk)
-   - Parseable JSON for the agent to use precisely
-   - Clear recommendations (low-risk first)
-
-4. **Review & Approve**: Reply with specifics, e.g.:
-   - "Trash the top 5 largest caches and all logs"
-   - "Delete the Xcode DerivedData and old simulators (permanent ok)"
-   - "Show me details on the node_modules ones first"
-   - "Only do low-risk items under 5GB total"
-
-5. **Agent calls safe_cleanup.py** with exact approved paths from the audit JSON. Script validates everything, shows dry-run summary, then executes only after your final "yes, proceed".
-
-6. **Post-cleanup**: Agent shows `df -h /` before/after delta and any follow-up advice (e.g. "restart Xcode", "empty Trash in Finder if you want permanent free space").
-
-You can run partial scans: `--category caches logs developer` etc.
-
-## What's Included
-
-- `SKILL.md`: Complete instructions + safety rules the agent follows.
-- `scripts/storage_audit.py`: Robust, zero-dep, portable read-only scanner with JSON + MD output. Strict whitelists + excludes.
-- `scripts/safe_cleanup.py`: The enforcement layer. Validates paths, supports dry-run / trash / permanent (guarded), uses native macOS Trash.
-- `scripts/utils.py`: Shared helpers (size formatting, path safety checks, logging).
-- `references/safety.md`: Deep reference for the agent (and curious humans).
-- Per-agent notes in `agents/`.
-- Example reports in `docs/`.
-
-## Supported Cleanup Categories (Safe by Design)
-
-**Low Risk (usually safe to trash/delete after review)**:
-- User & app caches (`~/Library/Caches/*`)
-- Logs (`~/Library/Logs/*`)
-- Package manager caches (npm, pnpm, yarn, pip, cargo, go, brew if applicable)
-- `/tmp` and `/private/tmp` (stale)
-- `~/.Trash` (empty it)
-- Old Xcode derived data & unavailable simulators
-
-**Medium Risk (review carefully)**:
-- Large `node_modules` folders (may be active projects)
-- Docker build cache / images / volumes (if Docker running)
-- Old downloads or archives in `~/Downloads` (listed separately, high caution)
-- Project build artifacts (if you know they're stale)
-
-**Never Touched**:
-- Anything in `~/Documents`, `~/Desktop`, `~/Pictures`, `~/Music`, `~/Movies`, `~/Public`
-- Photos libraries, iCloud Drive/Mobile Documents, Mail, Keychains, Application Support databases with user data
-- System `/`, `/System`, `/Library` (except user-writable caches where explicitly safe)
-- Active source code repositories or important dev projects (flagged for review only)
-- Anything requiring sudo unless you explicitly approve
-
-## Limitations & Recommendations
-
-- Not a duplicate finder or photo cleaner (use dedicated tools for that).
-- Best on user-initiated interactive sessions. Not for fully autonomous cron jobs (though you can extend it).
-- Large `~/Library/Caches` can be regenerated by apps; some apps may feel slower temporarily until they rebuild cache.
-- Always have a recent Time Machine or cloud backup before any cleanup session.
-- Test on a non-critical Mac first if paranoid.
-
-## Development & Contributing
-
-This is meant to be the gold standard for safe agent-driven macOS maintenance skills. PRs welcome for:
-- Additional safe categories (with justification + test paths)
-- Better size calculation performance
-- Integration with `brew cleanup`, `docker system prune`, `xcrun simctl`, etc. (guarded)
-- Windows/Linux analogs (future)
-
-Run `python3 -m pytest` (if tests added) or manually test the scripts on your Mac.
-
-## License
-
-MIT — use freely, improve it, share the safe way to clean Macs with agents.
+> My disk is full, run storage cleanup
 
 ---
 
-**Created as a proper, usable replacement for engagement-bait versions.**  
-If your disk is full right now, just paste this repo URL to your agent and say "install and run the safe version".
+## Usage
 
-Star it if it actually helped you reclaim space safely. 
+Fully interactive. Every session follows the same loop.
 
-## File Tree (High Level)
+```text
+  trigger  →  audit (read-only)  →  review table  →  approve paths
+      →  safe_cleanup (validated)  →  df before/after  →  next steps
+```
 
-See the full organized structure in the repo. The important part is `skill/SKILL.md` + the three Python scripts in `skill/scripts/`. Everything else supports distribution and multi-agent use.
+1. **Trigger** — e.g. *“Scan for wasted space and show me what I can safely delete.”*
+2. **Audit** — agent runs `python3 …/scripts/storage_audit.py --output /tmp/mac-audit`
+3. **Report** — ranked Markdown + JSON + low-risk-first recommendations
+4. **Approve** with exact intent, for example:
+   - “Trash the top 5 largest caches and all logs”
+   - “Delete Xcode DerivedData and old simulators (permanent ok)”
+   - “Show details on the `node_modules` entries first”
+   - “Only low-risk items under 5GB total”
+5. **Cleanup** — `safe_cleanup.py` with approved paths only (dry-run summary, then final “yes, proceed”)
+6. **Verify** — `df -h /` delta + follow-ups (restart Xcode, empty Trash in Finder for permanent free space)
+
+Partial scans are supported, e.g. `--category caches logs developer`.
+
+---
+
+## What's included
+
+| Path | Role |
+| ---- | ---- |
+| `skill/SKILL.md` | Agent instructions + safety rules |
+| `skill/scripts/storage_audit.py` | Read-only scanner; JSON + Markdown; zero Python deps |
+| `skill/scripts/safe_cleanup.py` | Validation layer; dry-run / trash / guarded permanent |
+| `skill/scripts/utils.py` | Size formatting, path safety, logging |
+| `skill/references/safety.md` | Deep safety reference |
+| `docs/` | Example reports |
+| `bin/`, `install.sh` | Distribution + multi-agent install |
+
+---
+
+## Cleanup categories
+
+### Low risk
+
+Usually safe to trash after a quick review.
+
+- User and app caches (`~/Library/Caches/*`)
+- Logs (`~/Library/Logs/*`)
+- Package manager caches (npm, pnpm, yarn, pip, cargo, go, brew)
+- Stale `/tmp` and `/private/tmp`
+- `~/.Trash` (empty)
+- Old Xcode DerivedData and unavailable simulators
+
+### Medium risk
+
+Review carefully before approving.
+
+- Large `node_modules` (may be active projects)
+- Docker build cache / images / volumes
+- Old items in `~/Downloads` (listed separately, high caution)
+- Project build artifacts (only if you know they are stale)
+
+### Never touched
+
+- `~/Documents`, `~/Desktop`, `~/Pictures`, `~/Music`, `~/Movies`, `~/Public`
+- Photos libraries, iCloud / Mobile Documents, Mail, Keychains, user databases in Application Support
+- System `/`, `/System`, `/Library` (except explicitly safe user-writable caches)
+- Active source repos and important projects (flagged for review only)
+- Anything needing `sudo` unless you explicitly approve
+
+---
+
+## Limitations
+
+- Not a duplicate finder or photo library cleaner — use dedicated tools for those.
+- Built for interactive, user-driven sessions — not unattended cron (you can extend it).
+- Regenerating large caches can make some apps slower until caches rebuild.
+- Keep a recent Time Machine or cloud backup before any cleanup session.
+- Prefer testing on a non-critical Mac if you want extra caution.
+
+---
+
+## Development
+
+Goal: a gold standard for safe, agent-driven macOS maintenance.
+
+PRs welcome for:
+
+- Additional safe categories (with justification + example paths)
+- Faster size calculation
+- Guarded integrations (`brew cleanup`, `docker system prune`, `xcrun simctl`, …)
+- Future Windows / Linux analogs
+
+```bash
+# Manual smoke test on your Mac
+python3 skill/scripts/storage_audit.py --output /tmp/mac-audit --min-size-mb 100
+python3 skill/scripts/safe_cleanup.py --help
+```
+
+---
+
+## License
+
+[MIT](LICENSE) — use freely, improve it, and share the safe way to clean Macs with agents.
+
+---
+
+<div align="center">
+
+**Built as a real replacement for engagement-bait stubs.**
+
+Paste this repo URL into your agent and say *“install and run the safe version.”*
+
+[![GitHub stars](https://img.shields.io/github/stars/ChloeVPin/safe-mac-storage-cleanup-skill?style=social)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill)
+[![GitHub issues](https://img.shields.io/github/issues/ChloeVPin/safe-mac-storage-cleanup-skill?style=flat-square)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/issues)
+[![GitHub last commit](https://img.shields.io/github/last-commit/ChloeVPin/safe-mac-storage-cleanup-skill?style=flat-square)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/commits/main)
+
+</div>
