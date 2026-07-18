@@ -1,0 +1,1 @@
+[the full SKILL.md content from earlier]

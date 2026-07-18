@@ -1,0 +1,42 @@
+{
+  "name": "safe-mac-storage-cleanup-skill",
+  "version": "1.0.0",
+  "description": "Production-ready, safety-first macOS storage cleanup skill for AI agents (Codex, Claude Code, Cursor, etc.). Read-only audit + explicit approval + strict whitelists + native Trash support. No engagement bait.",
+  "main": "bin/install.js",
+  "bin": {
+    "safe-mac-storage-cleanup-skill": "bin/install.js"
+  },
+  "scripts": {
+    "postinstall": "node bin/install.js --postinstall",
+    "install-skill": "node bin/install.js"
+  },
+  "keywords": [
+    "macos",
+    "cleanup",
+    "storage",
+    "disk",
+    "agent-skill",
+    "codex",
+    "claude",
+    "cursor",
+    "safe",
+    "ai-agent"
+  ],
+  "author": "Community (improved from original engagement-bait version)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "skill/",
+    "bin/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}
