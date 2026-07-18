@@ -229,3 +229,15 @@ Paste this repo URL into your agent and say *“install and run the safe version
 [![GitHub last commit](https://img.shields.io/github/last-commit/ChloeVPin/safe-mac-storage-cleanup-skill?style=flat-square)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/commits/main)
 
 </div>
+
+---
+
+## Testing (controlled sandbox)
+
+The skill ships with a **fake-HOME sandbox** that never touches your real files:
+
+```bash
+./tests/run_sandbox.sh
+```
+
+It seeds disposable caches/logs under a temp home, verifies the audit only lists whitelist paths, refuses Documents/Desktop/Mail/Keychains, and runs a dry-run → Trash agent-style workflow. The sandbox directory is deleted on exit.

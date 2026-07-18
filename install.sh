@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 set -euo pipefail
 
 # Simple cross-agent installer for safe-mac-storage-cleanup-skill
