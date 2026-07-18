@@ -1,6 +1,6 @@
 <div align="center">
 
-# safe-mac-storage-cleanup-skill
+![safe-mac-storage-cleanup-skill](docs/banner.png)
 
 **Production-ready, safety-first macOS storage cleanup for AI agents**
 
