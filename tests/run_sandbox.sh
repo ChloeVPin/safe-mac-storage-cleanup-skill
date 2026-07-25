@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Controlled sandbox test — NEVER touches the real user home.
+# Controlled sandbox test - NEVER touches the real user home.
 # Creates a fake HOME under /tmp, seeds caches + forbidden dirs, runs audit/cleanup.
 set -euo pipefail
 
@@ -52,8 +52,8 @@ dd if=/dev/urandom of="$FAKE_HOME/Library/Developer/Xcode/DerivedData/MyApp-abc/
 # npm cache ~2 MB
 dd if=/dev/urandom of="$FAKE_HOME/.npm/_cacache/content-v2/pack.tgz" bs=1024 count=2048 status=none
 
-# FORBIDDEN — must never appear as cleanable targets that get deleted by accident
-echo "DO NOT DELETE — real documents" > "$FAKE_HOME/Documents/SecretProject/thesis.txt"
+# FORBIDDEN - must never appear as cleanable targets that get deleted by accident
+echo "DO NOT DELETE - real documents" > "$FAKE_HOME/Documents/SecretProject/thesis.txt"
 echo "private desktop note" > "$FAKE_HOME/Desktop/notes.txt"
 echo "photo library stub" > "$FAKE_HOME/Pictures/vacation.jpg"
 echo "mail store" > "$FAKE_HOME/Library/Mail/mailbox.db"
@@ -206,7 +206,7 @@ APP_HASH_AFTER=$(shasum -a 256 "$FAKE_HOME/Library/Application Support/Important
 echo "--- 8) Simulated agent workflow ---"
 # Agent: load skill, audit, present findings, get approval, dry-run, execute
 python3 - <<'PY' "$SCRIPTS" "$AUDIT_PREFIX.json" "$FAKE_HOME"
-"""Minimal agent loop simulation (not LLM) — exercises the same calls an agent would make."""
+"""Minimal agent loop simulation (not LLM) - exercises the same calls an agent would make."""
 import json, subprocess, sys
 from pathlib import Path
 

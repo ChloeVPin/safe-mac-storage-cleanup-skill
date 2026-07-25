@@ -33,7 +33,7 @@ else
 fi
 
 echo ""
-echo "✅ Installation complete."
+echo " Installation complete."
 echo ""
 echo "Next steps:"
 echo "1. Tell your AI agent (Codex, Claude, Cursor...):"

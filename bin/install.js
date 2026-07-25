@@ -107,7 +107,7 @@ After install, tell your agent to use the "mac-storage-cleanup" skill.
     log('');
     log('Next steps:');
     log('1. Restart/reload your AI agent (Codex, Claude, Cursor, etc.) if it caches skills.');
-    log('2. In a new chat: "Load the mac-storage-cleanup skill" or simply "My disk is almost full — run safe storage cleanup".');
+    log('2. In a new chat: "Load the mac-storage-cleanup skill" or simply "My disk is almost full - run safe storage cleanup".');
     log('3. The agent will guide you through a read-only audit first. Nothing is deleted without your explicit approval.');
     log('');
     log('Safety: Strict whitelists + path validation + Trash-by-default. See README and skill/SKILL.md for details.');

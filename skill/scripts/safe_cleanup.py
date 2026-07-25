@@ -147,7 +147,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
 
     if args.mode == "permanent" and not dry_run:
-        logger.warning("PERMANENT delete requested — paths will not go to Trash")
+        logger.warning("PERMANENT delete requested - paths will not go to Trash")
 
     report = cleanup(audit, approved, mode=args.mode, dry_run=dry_run)
 
@@ -163,7 +163,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"reclaimed={report['reclaimed_human']}")
     for r in report["results"]:
         status = "OK" if r["ok"] else "FAIL"
-        err = f" — {r['error']}" if r.get("error") else ""
+        err = f" - {r['error']}" if r.get("error") else ""
         print(f"  [{status}] {r.get('size_human', '?')}  {r['path']}{err}")
 
     return 0 if report["failed_count"] == 0 else 1

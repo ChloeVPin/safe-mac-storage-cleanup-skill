@@ -214,7 +214,7 @@ def assert_safe_for_cleanup(path: Path, audit_paths: Optional[Sequence[str]] = N
     """Raise ValueError if path must not be cleaned."""
     reasons = deny_reasons(path)
     if reasons:
-        raise ValueError(f"Refusing path (deny list): {path} — {'; '.join(reasons)}")
+        raise ValueError(f"Refusing path (deny list): {path} - {'; '.join(reasons)}")
     if not is_whitelisted(path):
         raise ValueError(f"Refusing path (not on whitelist): {path}")
     if audit_paths is not None:

@@ -209,7 +209,7 @@ def render_markdown(report: Dict[str, Any]) -> str:
             f"{f['recommended_action']} | `{f['path']}` |"
         )
     if not report["findings"]:
-        lines.append("| — | — | — | — | — | _(none above min size)_ |")
+        lines.append("| - | - | - | - | - | _(none above min size)_ |")
     lines.extend(
         [
             "",

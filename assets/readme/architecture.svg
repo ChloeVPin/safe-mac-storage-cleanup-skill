@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="200" viewBox="0 0 1200 200" role="img" aria-labelledby="arch-title arch-desc">
+  <title id="arch-title">macOS Safe Storage Cleanup Execution Lifecycle</title>
+  <desc id="arch-desc">Four-stage lifecycle: Trigger Scan, Read-Only Audit, Review Report, and Safe Cleanup.</desc>
+
+  <!-- Background Canvas (Apple Light Mode, No Gradients) -->
+  <rect width="1200" height="200" rx="16" fill="#FAFAFA"/>
+  <rect width="1200" height="200" rx="16" fill="none" stroke="#E5E5EA" stroke-width="1.5"/>
+
+  <!-- Step 1: Trigger Scan -->
+  <g transform="translate(30, 32)">
+    <rect width="245" height="136" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.5"/>
+    <rect x="14" y="14" width="30" height="30" rx="6" fill="#007AFF" fill-opacity="0.12" stroke="#007AFF" stroke-width="1"/>
+    <text x="29" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="800" fill="#007AFF" text-anchor="middle">1</text>
+
+    <text x="54" y="35" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="700" fill="#1D1D1F">TRIGGER SCAN</text>
+    <text x="14" y="72" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">User disk full alert or</text>
+    <text x="14" y="92" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">agent storage cleanup request</text>
+    <text x="14" y="112" font-family="ui-monospace, monospace" font-size="12" fill="#007AFF">agent prompt trigger</text>
+  </g>
+
+  <!-- Arrow 1 to 2 -->
+  <g transform="translate(285, 86)">
+    <path d="M 0 15 L 18 15 M 13 9 L 19 15 L 13 21" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Step 2: Read-Only Audit -->
+  <g transform="translate(315, 32)">
+    <rect width="245" height="136" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.5"/>
+    <rect x="14" y="14" width="30" height="30" rx="6" fill="#007AFF" fill-opacity="0.12" stroke="#007AFF" stroke-width="1"/>
+    <text x="29" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="800" fill="#007AFF" text-anchor="middle">2</text>
+
+    <text x="54" y="35" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="700" fill="#1D1D1F">READ-ONLY AUDIT</text>
+    <text x="14" y="72" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">Scanner inspects safe whitelisted</text>
+    <text x="14" y="92" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">cache &amp; temp directories</text>
+    <text x="14" y="112" font-family="ui-monospace, monospace" font-size="12" fill="#007AFF">storage_audit.py</text>
+  </g>
+
+  <!-- Arrow 2 to 3 -->
+  <g transform="translate(570, 86)">
+    <path d="M 0 15 L 18 15 M 13 9 L 19 15 L 13 21" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Step 3: Review Report -->
+  <g transform="translate(600, 32)">
+    <rect width="265" height="136" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.5"/>
+    <rect x="14" y="14" width="30" height="30" rx="6" fill="#007AFF" fill-opacity="0.12" stroke="#007AFF" stroke-width="1"/>
+    <text x="29" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="800" fill="#007AFF" text-anchor="middle">3</text>
+
+    <text x="54" y="35" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="700" fill="#1D1D1F">REVIEW REPORT</text>
+    <text x="14" y="72" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">Presents ranked size table for</text>
+    <text x="14" y="92" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">explicit user path approval</text>
+    <text x="14" y="112" font-family="ui-monospace, monospace" font-size="12" fill="#007AFF">ranked Markdown + JSON</text>
+  </g>
+
+  <!-- Arrow 3 to 4 -->
+  <g transform="translate(875, 86)">
+    <path d="M 0 15 L 18 15 M 13 9 L 19 15 L 13 21" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Step 4: Safe Cleanup -->
+  <g transform="translate(905, 32)">
+    <rect width="265" height="136" rx="12" fill="#FFFFFF" stroke="#E5E5EA" stroke-width="1.5"/>
+    <rect x="14" y="14" width="30" height="30" rx="6" fill="#007AFF" stroke="#007AFF" stroke-width="1"/>
+    <text x="29" y="34" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="800" fill="#FFFFFF" text-anchor="middle">4</text>
+
+    <text x="54" y="35" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif" font-size="15" font-weight="700" fill="#1D1D1F">SAFE CLEANUP</text>
+    <text x="14" y="72" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">Moves approved items to Trash &amp;</text>
+    <text x="14" y="92" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif" font-size="13" fill="#86868B">verifies disk space recovered</text>
+    <text x="14" y="112" font-family="ui-monospace, monospace" font-size="12" fill="#007AFF">safe_cleanup.py</text>
+  </g>
+</svg>
