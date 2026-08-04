@@ -34,8 +34,8 @@ env/
 
 # Logs & temp from the skill itself
 *.log
-/tmp/mac-storage-audit-*
-/private/tmp/mac-storage-audit-*
+/tmp/cleanme-audit-*
+/private/tmp/cleanme-audit-*
 
 # Editor
 .vscode/

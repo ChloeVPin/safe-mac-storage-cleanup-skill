@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
- * Smart installer for safe-mac-storage-cleanup-skill
- * Supports multiple agent skill directories (Codex, Claude Code, Cursor, generic ~/.agents/skills, ~/.codex/skills, etc.)
+ * Smart installer for cleanme
+ * Supports multiple agent skill directories (Codex, Claude Code, Cursor, OpenCode, generic ~/.agents/skills, ~/.codex/skills, etc.)
  * Zero dependencies. Works on macOS (primary) and warns elsewhere.
  */
 
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execSync } = require('child_process');
 
-const SKILL_NAME = 'mac-storage-cleanup';
+const SKILL_NAME = 'cleanme';
 const SKILL_SOURCE = path.join(__dirname, '..', 'skill');
 
 const COMMON_SKILL_DIRS = [
@@ -18,11 +17,12 @@ const COMMON_SKILL_DIRS = [
   path.join(os.homedir(), '.agents', 'skills', SKILL_NAME),
   path.join(os.homedir(), '.claude', 'skills', SKILL_NAME),
   path.join(os.homedir(), '.cursor', 'skills', SKILL_NAME),
+  path.join(os.homedir(), '.config', 'opencode', 'skills', SKILL_NAME),
   path.join(os.homedir(), 'Library', 'Application Support', 'Codex', 'skills', SKILL_NAME), // fallback
 ];
 
 function log(msg) {
-  console.log(`[safe-mac-storage-cleanup] ${msg}`);
+  console.log(`[cleanme] ${msg}`);
 }
 
 function ensureDir(dir) {
@@ -68,22 +68,24 @@ function main() {
   const args = process.argv.slice(2);
   const isPostinstall = args.includes('--postinstall');
   const isHelp = args.includes('--help') || args.includes('-h');
+  const isUninstall = args.includes('--uninstall');
 
   if (isHelp) {
     console.log(`
-Usage: npx safe-mac-storage-cleanup-skill [options]
+Usage: npx cleanme --help
 
 Options:
   --postinstall     Run as postinstall hook (non-interactive where possible)
   --help            Show this help
+  --uninstall       Remove cleanme from agent skill directories
 
-Installs the mac-storage-cleanup skill into common AI agent skill directories.
-After install, tell your agent to use the "mac-storage-cleanup" skill.
-`);
+Installs the cleanme skill into common AI agent skill directories.
+After install, tell your agent to use the "cleanme" skill.
+ `);
     process.exit(0);
   }
 
-  log('Starting safe macOS storage cleanup skill installation...');
+  log('Starting cleanme installation...');
 
   if (os.platform() !== 'darwin') {
     log('WARNING: This skill is optimized for macOS. Some paths and Trash integration are macOS-specific. It may still work partially on other platforms.');
@@ -102,12 +104,12 @@ After install, tell your agent to use the "mac-storage-cleanup" skill.
     log('No standard locations succeeded. Manual install recommended:');
     log(`  mkdir -p ~/.agents/skills/${SKILL_NAME} && cp -r skill/* ~/.agents/skills/${SKILL_NAME}/`);
     log('Then tell your agent the skill is available.');
-  } else {
+   } else {
     log(`Successfully installed to ${installedCount} location(s).`);
     log('');
     log('Next steps:');
-    log('1. Restart/reload your AI agent (Codex, Claude, Cursor, etc.) if it caches skills.');
-    log('2. In a new chat: "Load the mac-storage-cleanup skill" or simply "My disk is almost full - run safe storage cleanup".');
+    log('1. Restart/reload your AI agent (Codex, Claude Code, Cursor, OpenCode, etc.) if it caches skills.');
+    log('2. In a new chat: "Load the cleanme skill" or simply "My disk is almost full - run cleanme".');
     log('3. The agent will guide you through a read-only audit first. Nothing is deleted without your explicit approval.');
     log('');
     log('Safety: Strict whitelists + path validation + Trash-by-default. See README and skill/SKILL.md for details.');
@@ -120,4 +122,13 @@ After install, tell your agent to use the "mac-storage-cleanup" skill.
   }
 }
 
-main();
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  if (args.includes('--uninstall')) {
+    // Delegate to uninstall script
+    const uninstallPath = path.join(__dirname, 'uninstall.js');
+    require(uninstallPath);
+  } else {
+    main();
+  }
+}

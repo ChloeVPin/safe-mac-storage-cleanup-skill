@@ -1,0 +1,7 @@
+{
+  "extra_whitelist_prefixes": [
+    "Library/Caches/MyCustomApp",
+    ".local/share/cache"
+  ],
+  "notes": "Optional user configuration for cleanme. Place at ~/.cleanme.json to extend the whitelist with additional safe prefixes. Paths are relative to $HOME. Never add paths that contain user data like Documents, Desktop, Pictures, or Library/Application Support."
+}

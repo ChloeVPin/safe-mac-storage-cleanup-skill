@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/readme/hero.svg" width="100%" alt="safe-mac-storage-cleanup-skill - Safe macOS Storage Cleanup for AI Agents" />
+  <img src="assets/readme/hero.svg" width="100%" alt="cleanme - Safe macOS Storage Cleanup for AI Agents" />
 </p>
 
 <p align="center">
@@ -7,8 +7,8 @@
     <img src="https://img.shields.io/badge/license-MIT-007AFF" alt="License" />
   </a>
   <img src="https://img.shields.io/badge/runtime-Zero%20Python%20deps-007AFF" alt="Zero Python Deps" />
-  <a href="https://www.npmjs.com/package/safe-mac-storage-cleanup-skill">
-    <img src="https://img.shields.io/badge/npx-safe--mac--storage--cleanup--skill-007AFF" alt="npm package" />
+  <a href="https://www.npmjs.com/package/cleanme">
+    <img src="https://img.shields.io/badge/npx-cleanme-007AFF" alt="npm package" />
   </a>
   <img src="https://img.shields.io/badge/platform-macOS-007AFF" alt="Platform macOS" />
 </p>
@@ -17,7 +17,7 @@
 
 ## Overview
 
-`safe-mac-storage-cleanup-skill` is a portable, code-enforced, interactive skill that enables AI coding agents to safely audit and clean wasted disk space on macOS.
+`cleanme` is a portable, code-enforced, interactive skill that enables AI coding agents to safely audit and clean wasted disk space on macOS.
 
 Unlike incomplete cleanup scripts or dangerous prompts that risk executing destructive commands like `rm -rf`, this skill operates under strict architectural guarantees: read-only audits first, whitelist path validation, Finder Trash safety, and zero privilege escalation by default.
 
@@ -49,36 +49,40 @@ Every cleanup operation is strictly enforced by code in `skill/scripts/safe_clea
 ### Option 1: Community Skills CLI (Recommended)
 
 ```bash
-npx safe-mac-storage-cleanup-skill@latest
+npx cleanme@latest
 ```
 
 ### Option 2: Manual Multi-Agent Installation
 
 ```bash
-git clone https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill.git
-cd safe-mac-storage-cleanup-skill
+git clone https://github.com/ChloeVPin/cleanme.git
+cd cleanme
 
 # Install for Agent Skills / Codex (~/.agents/skills)
-mkdir -p ~/.agents/skills/mac-storage-cleanup
-cp -r skill/* ~/.agents/skills/mac-storage-cleanup/
+mkdir -p ~/.agents/skills/cleanme
+cp -r skill/* ~/.agents/skills/cleanme/
 
 # Install for Claude Code (~/.claude/skills)
-mkdir -p ~/.claude/skills/mac-storage-cleanup
-cp -r skill/* ~/.claude/skills/mac-storage-cleanup/
+mkdir -p ~/.claude/skills/cleanme
+cp -r skill/* ~/.claude/skills/cleanme/
+
+# Install for OpenCode (~/.config/opencode/skills)
+mkdir -p ~/.config/opencode/skills/cleanme
+cp -r skill/* ~/.config/opencode/skills/cleanme/
 ```
 
 ### Option 3: Automated Installer Script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ChloeVPin/safe-mac-storage-cleanup-skill/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ChloeVPin/cleanme/main/install.sh | bash
 ```
 
 ---
 
 ## Interactive Workflow Execution
 
-1. **Trigger Scan**: Prompt your agent: *"My disk is full, run safe storage cleanup."*
-2. **Audit Execution**: The agent runs `python3 skill/scripts/storage_audit.py --output /tmp/mac-audit`
+1. **Trigger Scan**: Prompt your agent: *"My disk is full, run cleanme."*
+2. **Audit Execution**: The agent runs `python3 skill/scripts/storage_audit.py --output /tmp/cleanme-audit`
 3. **Report Presentation**: A ranked Markdown + JSON breakdown is rendered with itemized space usage.
 4. **User Path Approval**: You select exact items to trash (for example: *"Trash the top 3 largest caches and Xcode DerivedData"*).
 5. **Validated Cleanup**: `safe_cleanup.py` executes dry-run validation followed by safe file removal to Trash.
@@ -111,7 +115,7 @@ curl -fsSL https://raw.githubusercontent.com/ChloeVPin/safe-mac-storage-cleanup-
 ## Repository Anatomy
 
 ```text
-safe-mac-storage-cleanup-skill/
+cleanme/
 ├── skill/
 │   ├── SKILL.md                     # Agent instruction context & safety rules
 │   ├── scripts/
@@ -122,7 +126,9 @@ safe-mac-storage-cleanup-skill/
 │       └── safety.md                # Deep safety reference documentation
 ├── bin/                             # CLI executable entry points
 ├── tests/                           # Controlled fake-HOME sandbox test suite
-└── install.sh                       # Multi-agent installation script
+├── docs/                            # Documentation and examples
+├── install.sh                       # Multi-agent installation script
+└── package.json                     # npm package configuration
 ```
 
 ---
@@ -136,6 +142,56 @@ Test the cleanup workflow safely without touching your real files:
 ```
 
 The sandbox creates a disposable temporary environment, populates fake caches, verifies path whitelist enforcement, and confirms that protected folders are strictly inaccessible.
+
+---
+
+## Troubleshooting
+
+### python3 not found
+
+If you see `env: python3: No such file or directory`, install Python 3.8+ from [python.org](https://www.python.org) or via Homebrew:
+
+```bash
+brew install python3
+```
+
+### Permission denied during cleanup
+
+If a file or directory cannot be moved to Trash or deleted, check:
+- Is the file owned by root? Use `sudo` only if you understand the risk.
+- Does the file have immutable flags? Remove with `chflags -R nouchg <path>`.
+- Is the file open in another app? Close the app and retry.
+
+### Audit finds no items
+
+If the audit reports no findings:
+- Lower the size threshold: add `--min-size-mb 50` to the audit command.
+- Check that the target directories exist and contain data.
+- Verify you are scanning the correct HOME directory.
+
+### Trash is full
+
+If Trash cannot accept more files, empty it in Finder or run:
+
+```bash
+rm -rf ~/.Trash/*
+```
+
+### Cleanup fails partway
+
+If some paths fail during cleanup:
+- Review the error message for each failed path.
+- Do not retry automatically; investigate the cause first.
+- Re-run the audit to get an updated list of safe paths.
+
+## Recovery
+
+Files moved to Trash can be restored from the Finder Trash folder until it is emptied. To restore:
+1. Open Finder.
+2. Open the Trash folder.
+3. Right-click the file and select "Put Back".
+
+If you used `--mode permanent`, the files are irreversibly deleted. Do not use permanent mode unless you are certain.
 
 ---
 

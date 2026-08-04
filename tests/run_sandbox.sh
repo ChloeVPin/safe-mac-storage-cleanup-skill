@@ -41,6 +41,28 @@ mkdir -p \
   "$FAKE_HOME/Library/Keychains" \
   "$FAKE_HOME/Library/Application Support/ImportantApp"
 
+# Paths with spaces and Unicode
+mkdir -p \
+  "$FAKE_HOME/Library/Caches/My App Cache" \
+  "$FAKE_HOME/Library/Logs/My App Logs" \
+  "$FAKE_HOME/Library/Caches/Café Cache" \
+  "$FAKE_HOME/Library/Caches/Москва Cache"
+
+dd if=/dev/urandom of="$FAKE_HOME/Library/Caches/My App Cache/blob.bin" bs=1024 count=2000 status=none
+dd if=/dev/urandom of="$FAKE_HOME/Library/Logs/My App Logs/app.log" bs=1024 count=1500 status=none
+dd if=/dev/urandom of="$FAKE_HOME/Library/Caches/Café Cache/cache.dat" bs=1024 count=1800 status=none
+dd if=/dev/urandom of="$FAKE_HOME/Library/Caches/Москва Cache/cache.dat" bs=1024 count=2200 status=none
+
+# Symlink fixtures
+mkdir -p "$FAKE_HOME/Library/Caches/SymlinkTest"
+ln -s "$FAKE_HOME/Documents/SecretProject" "$FAKE_HOME/Library/Caches/SymlinkTest/evil-link" 2>/dev/null || true
+ln -s "$FAKE_HOME/Library/Caches/BigAppCache" "$FAKE_HOME/Library/Caches/SymlinkTest/cache-link" 2>/dev/null || true
+
+# Permission denied fixtures
+mkdir -p "$FAKE_HOME/Library/Caches/LockedCache"
+dd if=/dev/urandom of="$FAKE_HOME/Library/Caches/LockedCache/locked.bin" bs=1024 count=2000 status=none
+chmod 000 "$FAKE_HOME/Library/Caches/LockedCache/locked.bin" 2>/dev/null || true
+
 # ~6 MB cache (above 1 MB min)
 dd if=/dev/urandom of="$FAKE_HOME/Library/Caches/BigAppCache/blob.bin" bs=1024 count=6000 status=none
 # small cache under threshold
@@ -203,7 +225,118 @@ APP_HASH_AFTER=$(shasum -a 256 "$FAKE_HOME/Library/Application Support/Important
 [[ "$KEY_HASH_BEFORE" == "$KEY_HASH_AFTER" ]] && pass "Keychains hash unchanged" || fail "Keychains mutated"
 [[ "$APP_HASH_BEFORE" == "$APP_HASH_AFTER" ]] && pass "Application Support hash unchanged" || fail "Application Support mutated"
 
-echo "--- 8) Simulated agent workflow ---"
+echo "--- 9) Paths with spaces and Unicode ---"
+python3 - <<'PY' "$SCRIPTS" "$AUDIT_PREFIX.json" "$FAKE_HOME"
+import json, subprocess, sys
+from pathlib import Path
+
+scripts, audit_json, home = Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3])
+report = json.loads(audit_json.read_text())
+paths = [f["path"] for f in report["findings"]]
+
+space_paths = [p for p in paths if "My App" in p]
+unicode_paths = [p for p in paths if "Caf" in p or "Москва" in p]
+if not space_paths:
+    print("  FAIL: no paths with spaces found")
+    sys.exit(1)
+if not unicode_paths:
+    print("  FAIL: no unicode paths found")
+    sys.exit(1)
+print(f"  OK found {len(space_paths)} space paths, {len(unicode_paths)} unicode paths")
+PY
+pass "audit handles paths with spaces and Unicode"
+
+echo "--- 10) Symlink rejection ---"
+set +e
+python3 "$SCRIPTS/safe_cleanup.py" \
+  --audit-json "$AUDIT_PREFIX.json" \
+  --approved-paths "$FAKE_HOME/Library/Caches/SymlinkTest/evil-link" \
+  --mode trash \
+  --dry-run false > "$SANDBOX_ROOT/symlink_refuse.out" 2>&1
+set -e
+if grep -qi "symlink\|Refusing" "$SANDBOX_ROOT/symlink_refuse.out"; then
+  pass "cleanup refused symlink to Documents"
+else
+  fail "should refuse symlink"
+  cat "$SANDBOX_ROOT/symlink_refuse.out"
+fi
+test -f "$FAKE_HOME/Documents/SecretProject/thesis.txt" && pass "Documents intact after symlink attempt" || fail "Documents were touched!"
+
+echo "--- 11) Permission denied handling ---"
+set +e
+python3 "$SCRIPTS/safe_cleanup.py" \
+  --audit-json "$AUDIT_PREFIX.json" \
+  --approved-paths "$FAKE_HOME/Library/Caches/LockedCache" \
+  --mode trash \
+  --dry-run false > "$SANDBOX_ROOT/perm_denied.out" 2>&1
+set -e
+if grep -qi "permission denied\|FAIL" "$SANDBOX_ROOT/perm_denied.out"; then
+  pass "cleanup reported permission denied"
+else
+  fail "should report permission denied"
+  cat "$SANDBOX_ROOT/perm_denied.out"
+fi
+
+echo "--- 12) Empty approved paths ---"
+set +e
+python3 "$SCRIPTS/safe_cleanup.py" \
+  --audit-json "$AUDIT_PREFIX.json" \
+  --approved-paths "" \
+  --mode trash \
+  --dry-run false > "$SANDBOX_ROOT/empty_approve.out" 2>&1
+set -e
+if [[ $? -eq 2 ]] || grep -qi "no approved paths" "$SANDBOX_ROOT/empty_approve.out"; then
+  pass "cleanup handled zero approved paths"
+else
+  fail "should handle zero approved paths gracefully"
+fi
+
+echo "--- 13) Permanent delete mode ---"
+PERM_TARGET="$FAKE_HOME/Library/Caches/PermDeleteTest"
+mkdir -p "$PERM_TARGET"
+dd if=/dev/urandom of="$PERM_TARGET/data.bin" bs=1024 count=2000 status=none
+# Run a fresh audit that includes this path
+python3 "$SCRIPTS/storage_audit.py" --output "$SANDBOX_ROOT/perm-audit" --min-size-mb 0.001 --no-system-tmp >/dev/null
+set +e
+python3 "$SCRIPTS/safe_cleanup.py" \
+  --audit-json "$SANDBOX_ROOT/perm-audit.json" \
+  --approved-paths "$PERM_TARGET" \
+  --mode permanent \
+  --dry-run false \
+  --confirm-permanent > "$SANDBOX_ROOT/perm_delete.out" 2>&1
+set -e
+if [[ ! -d "$PERM_TARGET" ]]; then
+  pass "permanent delete removed directory"
+else
+  fail "permanent delete did not remove directory"
+  cat "$SANDBOX_ROOT/perm_delete.out"
+fi
+if grep -q "FAIL" "$SANDBOX_ROOT/perm_delete.out"; then
+  fail "permanent delete reported failure"
+fi
+
+echo "--- 14) Stale audit / modified file ---"
+# Create a new cache, audit it, then modify it before cleanup
+STALE_DIR="$FAKE_HOME/Library/Caches/StaleTest"
+mkdir -p "$STALE_DIR"
+dd if=/dev/urandom of="$STALE_DIR/data.bin" bs=1024 count=3000 status=none
+python3 "$SCRIPTS/storage_audit.py" --output "$SANDBOX_ROOT/stale-audit" --min-size-mb 1 --no-system-tmp >/dev/null
+# Modify file after audit
+dd if=/dev/urandom of="$STALE_DIR/data.bin" bs=1024 count=100 status=none
+set +e
+python3 "$SCRIPTS/safe_cleanup.py" \
+  --audit-json "$SANDBOX_ROOT/stale-audit.json" \
+  --approved-paths "$STALE_DIR" \
+  --mode trash \
+  --dry-run false > "$SANDBOX_ROOT/stale.out" 2>&1
+set -e
+if grep -qi "size changed\|inode changed" "$SANDBOX_ROOT/stale.out"; then
+  pass "cleanup detected modified file"
+else
+  fail "should detect size/inode change"
+  cat "$SANDBOX_ROOT/stale.out"
+fi
+echo "--- 15) Simulated agent workflow ---"
 # Agent: load skill, audit, present findings, get approval, dry-run, execute
 python3 - <<'PY' "$SCRIPTS" "$AUDIT_PREFIX.json" "$FAKE_HOME"
 """Minimal agent loop simulation (not LLM) - exercises the same calls an agent would make."""
@@ -242,6 +375,41 @@ assert any(Path(home / ".Trash").glob("app.log*")), "log should be in trash"
 print("  agent workflow OK")
 PY
 pass "simulated agent audit→approve→dry-run→trash"
+
+echo "--- 16) Integration: agent workflow with error recovery ---"
+# Agent: audit, approve multiple paths, one fails, verify partial success
+python3 - <<'PY' "$SCRIPTS" "$FAKE_HOME"
+import json, subprocess, sys
+from pathlib import Path
+
+scripts, home = Path(sys.argv[1]), Path(sys.argv[2])
+# Create a fresh audit
+audit_json = home / "integration-audit.json"
+subprocess.run(
+    [sys.executable, str(scripts / "storage_audit.py"),
+     "--output", str(home / "integration-audit"),
+     "--min-size-mb", "0.001", "--no-system-tmp"],
+    check=True, capture_output=True,
+)
+report = json.loads(audit_json.read_text())
+# Approve two paths: one valid, one that will fail (Documents)
+targets = [
+    report["findings"][0]["path"],
+    str(home / "Documents" / "SecretProject"),
+]
+r = subprocess.run(
+    [sys.executable, str(scripts / "safe_cleanup.py"),
+     "--audit-json", str(audit_json),
+     "--approved-paths", ",".join(targets),
+     "--mode", "trash", "--dry-run", "false"],
+    capture_output=True, text=True,
+)
+# Should fail because Documents is denied, but first path should succeed
+assert r.returncode != 0, "should fail due to denied path"
+assert "FAIL" in r.stdout or "Refusing" in r.stdout
+print("  integration error recovery OK")
+PY
+pass "agent workflow handles partial failure gracefully"
 
 echo
 echo "=== RESULTS: $PASS passed, $FAIL failed ==="

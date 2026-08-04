@@ -18,6 +18,7 @@ if str(_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS))
 
 from utils import (  # noqa: E402
+    check_python3,
     dir_size_bytes,
     home,
     human_bytes,
@@ -42,6 +43,11 @@ SCAN_TARGETS = [
     (".Trash", "trash", "low", "Trash"),
     ("Library/Caches/Homebrew", "package_cache", "low", "Homebrew cache"),
     ("Library/Caches/pip", "package_cache", "low", "pip cache"),
+    ("Library/Caches/Yarn", "package_cache", "low", "Yarn cache"),
+    ("Library/Caches/CocoaPods", "package_cache", "low", "CocoaPods cache"),
+    (".conda/pkgs", "package_cache", "low", "conda packages"),
+    (".rbenv/versions", "package_manager", "low", "rbenv Ruby versions"),
+    (".phpbrew", "package_manager", "low", "phpbrew PHP versions"),
 ]
 
 ABS_SCAN = [
@@ -92,6 +98,7 @@ def audit(
     min_size_mb: float = 1.0,
     categories: Optional[List[str]] = None,
     include_abs_tmp: bool = True,
+    session_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     min_size = int(min_size_mb * 1024 * 1024)
     cat_filter = set(categories) if categories else None
@@ -111,25 +118,22 @@ def audit(
         if cat_filter and category not in cat_filter:
             continue
         root = _resolve_target(rel)
-        if not is_whitelisted(root) and not (root.exists() and is_whitelisted(root)):
-            # still allow scanning known safe roots even if empty
-            if not any(str(root).endswith(p.split("/")[-1]) for p in [rel]):
-                pass
+        if not root.exists():
+            continue
         if not is_whitelisted(root):
-            # Root must be whitelistable as a prefix path even if missing
-            # Construct check: parent of first existing part
-            if not is_whitelisted(root) and not root.exists():
-                # skip missing
-                continue
-            if root.exists() and not is_whitelisted(root):
-                logger.warning("Skipping non-whitelisted target %s", root)
-                continue
+            logger.warning("Skipping non-whitelisted target %s", root)
+            continue
 
         for child in _list_children(root, min_size):
             p = Path(child["path"])
             if not is_whitelisted(p):
                 logger.warning("Skipping non-whitelisted child %s", p)
                 continue
+            try:
+                stat = p.stat()
+                inode = (stat.st_dev, stat.st_ino)
+            except OSError:
+                inode = None
             findings.append(
                 {
                     "path": child["path"],
@@ -139,6 +143,7 @@ def audit(
                     "risk": risk,
                     "label": label,
                     "recommended_action": "trash" if risk == "low" else "review",
+                    "inode": inode,
                 }
             )
 
@@ -152,6 +157,11 @@ def audit(
             p = Path(child["path"])
             if not is_whitelisted(p):
                 continue
+            try:
+                stat = p.stat()
+                inode = (stat.st_dev, stat.st_ino)
+            except OSError:
+                inode = None
             # Avoid scanning huge unrelated /tmp noise: only age-agnostic but size-gated
             findings.append(
                 {
@@ -162,6 +172,7 @@ def audit(
                     "risk": risk,
                     "label": label,
                     "recommended_action": "trash",
+                    "inode": inode,
                 }
             )
 
@@ -174,6 +185,7 @@ def audit(
         "home": str(home()),
         "sandbox": os.environ.get("MAC_STORAGE_SANDBOX") == "1",
         "min_size_mb": min_size_mb,
+        "session_id": session_id,
         "summary": {
             "item_count": len(findings),
             "total_bytes": total,
@@ -227,6 +239,7 @@ def render_markdown(report: Dict[str, Any]) -> str:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    check_python3()
     p = argparse.ArgumentParser(description="Read-only safe storage audit")
     p.add_argument(
         "--output",
@@ -245,12 +258,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="Skip /tmp and /private/tmp",
     )
+    p.add_argument(
+        "--session-id",
+        default=None,
+        help="Optional session ID to embed in the audit report for replay protection",
+    )
     args = p.parse_args(argv)
 
     report = audit(
         min_size_mb=args.min_size_mb,
         categories=args.category,
         include_abs_tmp=not args.no_system_tmp,
+        session_id=args.session_id,
     )
 
     out = Path(args.output)

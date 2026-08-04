@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340" role="img" aria-labelledby="title desc">
-  <title id="title">safe-mac-storage-cleanup-skill - Safe macOS Storage Cleanup for AI Agents</title>
+  <title id="title">cleanme - Safe macOS Storage Cleanup for AI Agents</title>
   <desc id="desc">Read-only audit first macOS storage cleanup skill with strict path whitelisting and Finder Trash safety.</desc>
 
   <!-- Background Canvas (Apple Light Mode, No Gradients) -->
@@ -9,7 +9,7 @@
   <!-- Left Column: Branding & Information (No Pills, No Gradients, Adjusted Title Size) -->
   <g transform="translate(60, 52)">
     <!-- Main Title (Proportionally scaled to fit left column without overflowing) -->
-    <text x="0" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif" font-size="34" font-weight="800" fill="#1D1D1F" letter-spacing="-1.0">safe-mac-storage-cleanup</text>
+    <text x="0" y="44" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif" font-size="34" font-weight="800" fill="#1D1D1F" letter-spacing="-1.0">cleanme</text>
 
     <!-- Subtitle -->
     <text x="0" y="90" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif" font-size="19" fill="#86868B" font-weight="400">Interactive, read-only audit first macOS</text>
@@ -19,7 +19,7 @@
     <g transform="translate(0, 160)">
       <rect width="436" height="48" rx="8" fill="#FFFFFF" stroke="#007AFF" stroke-width="1.5"/>
       <text x="16" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" fill="#007AFF" font-weight="700">$</text>
-      <text x="32" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#1D1D1F" font-weight="600">npx safe-mac-storage-cleanup-skill@latest</text>
+      <text x="32" y="30" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="14" fill="#1D1D1F" font-weight="600">npx cleanme@latest</text>
     </g>
   </g>
 

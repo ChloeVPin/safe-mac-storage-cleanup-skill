@@ -14,7 +14,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence
 
 # --- Path roots (HOME-aware) -------------------------------------------------
 
@@ -42,8 +42,8 @@ def human_bytes(n: int) -> str:
     return f"{n} B"
 
 
-def dir_size_bytes(path: Path, max_depth: int = 8) -> int:
-    """Best-effort recursive size. Skips permission errors."""
+def dir_size_bytes(path: Path, max_depth: int = 8, max_walk_seconds: float = 30.0) -> int:
+    """Best-effort recursive size. Skips permission errors and times out after max_walk_seconds."""
     if not path.exists():
         return 0
     if path.is_file() or path.is_symlink():
@@ -52,12 +52,24 @@ def dir_size_bytes(path: Path, max_depth: int = 8) -> int:
         except OSError:
             return 0
     total = 0
+    start = datetime.now(timezone.utc)
+    file_count = 0
     try:
         for root, dirs, files in os.walk(path, followlinks=False):
+            elapsed = (datetime.now(timezone.utc) - start).total_seconds()
+            if elapsed > max_walk_seconds:
+                logger.warning("dir_size_bytes timed out after %.1fs walking %s", elapsed, path)
+                break
             depth = Path(root).relative_to(path).parts
             if len(depth) >= max_depth:
                 dirs.clear()
             for name in files:
+                file_count += 1
+                if file_count % 1000 == 0:
+                    elapsed = (datetime.now(timezone.utc) - start).total_seconds()
+                    if elapsed > max_walk_seconds:
+                        logger.warning("dir_size_bytes timed out after %.1fs and %d files in %s", elapsed, file_count, path)
+                        break
                 fp = Path(root) / name
                 try:
                     if fp.is_symlink():
@@ -93,6 +105,10 @@ SAFE_PREFIX_REL = [
     "Library/Caches/Yarn",
     "Library/Caches/CocoaPods",
     "Library/Caches/com.apple.dt.Xcode",
+    # additional package managers
+    ".conda/pkgs",
+    ".rbenv/versions",
+    ".phpbrew",
 ]
 
 # Absolute roots that are also safe (system temp)
@@ -195,7 +211,11 @@ def is_whitelisted(path: Path) -> bool:
         if s == abs_p or s.startswith(abs_p.rstrip("/") + os.sep) or s.startswith(abs_p + os.sep):
             # /var/folders is broad; require it to look like a temp cache path
             if abs_p == "/var/folders":
-                if "/T/" in s or "/C/" in s:
+                # Only allow specific known-safe patterns under /var/folders
+                # These are macOS user temp/cache directories
+                if "/T/" in s and ("/Library/Caches/" in s or "/Caches/" in s):
+                    return True
+                if "/C/" in s and ("/Library/Caches/" in s or "/Caches/" in s):
                     return True
                 return False
             return True
@@ -207,11 +227,17 @@ def is_whitelisted(path: Path) -> bool:
     for pref in SAFE_PREFIX_REL:
         if rel == pref or rel.startswith(pref + os.sep):
             return True
+    # Check user-configured extra prefixes
+    for pref in get_extra_whitelist_prefixes():
+        if rel == pref or rel.startswith(pref + os.sep):
+            return True
     return False
 
 
 def assert_safe_for_cleanup(path: Path, audit_paths: Optional[Sequence[str]] = None) -> None:
     """Raise ValueError if path must not be cleaned."""
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink: {path}")
     reasons = deny_reasons(path)
     if reasons:
         raise ValueError(f"Refusing path (deny list): {path} - {'; '.join(reasons)}")
@@ -221,16 +247,21 @@ def assert_safe_for_cleanup(path: Path, audit_paths: Optional[Sequence[str]] = N
         resolved = str(path.expanduser().resolve())
         allowed = {str(Path(p).expanduser().resolve()) for p in audit_paths}
         if resolved not in allowed:
-            # also allow if any audit path is a parent of this path or vice-versa for exact entries
-            if resolved not in allowed:
-                raise ValueError(
-                    f"Refusing path not present in audit report: {path}"
-                )
+            raise ValueError(
+                f"Refusing path not present in audit report: {path}"
+            )
+
+
+def check_python3() -> None:
+    """Verify python3 is available and meets minimum version."""
+    if sys.version_info < (3, 8):
+        print("ERROR: python3 >= 3.8 is required. Please install it from python.org or brew.", file=sys.stderr)
+        sys.exit(1)
 
 
 # --- Logging -----------------------------------------------------------------
 
-def setup_logger(name: str = "mac-storage", log_file: Optional[Path] = None) -> logging.Logger:
+def setup_logger(name: str = "cleanme", log_file: Optional[Path] = None) -> logging.Logger:
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
@@ -254,6 +285,8 @@ def move_to_trash(path: Path) -> None:
     path = path.expanduser().resolve()
     if not path.exists():
         raise FileNotFoundError(str(path))
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink: {path}")
 
     # Prefer macOS Finder trash when available and not in sandbox (real home)
     if sys.platform == "darwin" and os.environ.get("MAC_STORAGE_SANDBOX") != "1":
@@ -265,6 +298,8 @@ def move_to_trash(path: Path) -> None:
                 capture_output=True,
                 text=True,
             )
+            if path.exists():
+                raise RuntimeError(f"Finder reported success but path still exists: {path}")
             return
         except (subprocess.CalledProcessError, FileNotFoundError):
             pass
@@ -275,15 +310,53 @@ def move_to_trash(path: Path) -> None:
     if dest.exists():
         stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         dest = trash_dir / f"{path.name}.{stamp}"
-    shutil.move(str(path), str(dest))
+    try:
+        shutil.move(str(path), str(dest))
+    except PermissionError as e:
+        raise PermissionError(f"Permission denied moving to Trash: {path} ({e})")
+    if path.exists():
+        raise RuntimeError(f"Trash operation completed but source still exists: {path}")
 
 
 def permanent_delete(path: Path) -> None:
     path = path.expanduser().resolve()
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink: {path}")
     if path.is_dir() and not path.is_symlink():
-        shutil.rmtree(path)
+        try:
+            shutil.rmtree(path)
+        except PermissionError as e:
+            raise PermissionError(f"Permission denied permanently deleting: {path} ({e})")
     else:
-        path.unlink()
+        try:
+            path.unlink()
+        except PermissionError as e:
+            raise PermissionError(f"Permission denied permanently deleting: {path} ({e})")
+
+
+def soft_permanent_delete(path: Path, quarantine_dir: Optional[Path] = None) -> Path:
+    """Move to quarantine directory before permanent deletion."""
+    path = path.expanduser().resolve()
+    if path.is_symlink():
+        raise ValueError(f"Refusing symlink: {path}")
+    if quarantine_dir is None:
+        quarantine_dir = home() / ".Trash" / "cleanme-quarantine"
+    quarantine_dir.mkdir(parents=True, exist_ok=True)
+    dest = quarantine_dir / path.name
+    if dest.exists():
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+        dest = quarantine_dir / f"{path.name}.{stamp}"
+    try:
+        shutil.move(str(path), str(dest))
+    except OSError as e:
+        # Cross-filesystem move fallback: copy then delete
+        if path.is_dir() and not path.is_symlink():
+            shutil.copytree(str(path), str(dest))
+            shutil.rmtree(str(path))
+        else:
+            shutil.copy2(str(path), str(dest))
+            path.unlink()
+    return dest
 
 
 def disk_free_bytes(mount: str = "/") -> Optional[int]:
@@ -305,3 +378,26 @@ def read_json(path: Path) -> object:
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def load_cleanme_config() -> Dict[str, Any]:
+    """Load optional cleanme.json config file for user-extended whitelist."""
+    config_path = home() / ".cleanme.json"
+    if not config_path.exists():
+        return {}
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return {}
+        return data
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def get_extra_whitelist_prefixes() -> List[str]:
+    """Return additional safe prefixes from cleanme.json config."""
+    config = load_cleanme_config()
+    prefixes = config.get("extra_whitelist_prefixes", [])
+    if not isinstance(prefixes, list):
+        return []
+    return [str(p) for p in prefixes if isinstance(p, str)]
