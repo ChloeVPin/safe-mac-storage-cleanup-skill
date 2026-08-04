@@ -2,7 +2,7 @@
   <img src="assets/readme/logo.png" width="120" alt="cleanme logo" />
 </p>
 
-# cleanme
+<h1 align="center">cleanme</h1>
 
 <p align="center">
   Safety-first macOS storage cleanup for AI agents. Read-only audit first, strict whitelists, explicit per-path approval, Trash by default.
