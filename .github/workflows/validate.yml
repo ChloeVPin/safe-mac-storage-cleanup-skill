@@ -17,7 +17,7 @@ jobs:
 
       - name: Locate and validate the skill
         run: python3 - <<'PY'
-import pathlib, sys, yaml
+import pathlib, sys
 
 skill = next(pathlib.Path(".").rglob("SKILL.md"), None)
 if skill is None:
@@ -27,22 +27,25 @@ if skill is None:
 text = skill.read_text(encoding="utf-8")
 assert "---" in text, "SKILL.md missing frontmatter delimiters"
 
-meta_raw = text.split("---", 2)[1]
-meta = yaml.safe_load(meta_raw)
-assert "name" in meta, "frontmatter missing 'name'"
-assert "description" in meta, "frontmatter missing 'description'"
-print(f"frontmatter OK: {meta['name']}")
+parts = text.split("---", 2)
+assert len(parts) >= 3, "SKILL.md frontmatter not closed"
+meta = parts[1]
+
+for key in ("name:", "description:"):
+    assert key in meta, f"frontmatter missing '{key}'"
 
 em = "\u2014"
 assert em not in text, "em dash found in SKILL.md"
-print("typography OK (no em dash)")
 
-body = text.split("---", 2)[2].strip()
+body = parts[2].strip()
 assert len(body.splitlines()) >= 10, "skill body too short"
-print(f"body lines: {len(body.splitlines())}")
 
 readme = pathlib.Path("README.md").read_text(encoding="utf-8")
 assert "npx skills add" in readme, "README missing 'npx skills add'"
+
+print("frontmatter OK")
+print("typography OK (no em dash)")
+print(f"body lines: {len(body.splitlines())}")
 print("install command present")
 print("VALIDATE OK")
 PY
