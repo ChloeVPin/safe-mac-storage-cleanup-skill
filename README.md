@@ -9,14 +9,12 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-007AFF?style=flat" alt="License" />
-  </a>
-  <img src="https://img.shields.io/badge/runtime-Zero%20Python%20deps-007AFF?style=flat" alt="Zero Python Deps" />
-  <a href="https://www.npmjs.com/package/cleanme">
-    <img src="https://img.shields.io/badge/npx-cleanme-007AFF?style=flat" alt="npm package" />
-  </a>
-  <img src="https://img.shields.io/badge/platform-macOS-007AFF?style=flat" alt="Platform macOS" />
+[![CI](https://img.shields.io/github/actions/workflow/status/ChloeVPin/safe-mac-storage-cleanup-skill/validate.yml?style=flat&logo=githubactions&logoColor=white)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/actions/workflows/validate.yml)
+[![Licence](https://img.shields.io/badge/licence-MIT-3DA639?style=flat&logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/ChloeVPin/safe-mac-storage-cleanup-skill?style=flat&logo=semanticrelease&logoColor=white)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/releases/latest)
+[![Stars](https://img.shields.io/github/stars/ChloeVPin/safe-mac-storage-cleanup-skill?style=flat&logo=github&logoColor=white)](https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill/stargazers)
+[![Install](https://img.shields.io/badge/install-npx_skills_add-000000?style=flat&logo=npm&logoColor=white)](#install)
+[![Format](https://img.shields.io/badge/format-Agent_Skills-8A63D2?style=flat&logo=anthropic&logoColor=white)](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 </p>
 
 ---
