@@ -16,36 +16,37 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Locate and validate the skill
-        run: python3 - <<'PY'
-import pathlib, sys
+        run: |
+          python3 - <<'PY'
+          import pathlib, sys
 
-skill = next(pathlib.Path(".").rglob("SKILL.md"), None)
-if skill is None:
-    print("ERROR: no SKILL.md found")
-    sys.exit(1)
+          skill = next(pathlib.Path(".").rglob("SKILL.md"), None)
+          if skill is None:
+              print("ERROR: no SKILL.md found")
+              sys.exit(1)
 
-text = skill.read_text(encoding="utf-8")
-assert "---" in text, "SKILL.md missing frontmatter delimiters"
+          text = skill.read_text(encoding="utf-8")
+          assert "---" in text, "SKILL.md missing frontmatter delimiters"
 
-parts = text.split("---", 2)
-assert len(parts) >= 3, "SKILL.md frontmatter not closed"
-meta = parts[1]
+          parts = text.split("---", 2)
+          assert len(parts) >= 3, "SKILL.md frontmatter not closed"
+          meta = parts[1]
 
-for key in ("name:", "description:"):
-    assert key in meta, f"frontmatter missing '{key}'"
+          for key in ("name:", "description:"):
+              assert key in meta, "frontmatter missing " + key
 
-em = "\u2014"
-assert em not in text, "em dash found in SKILL.md"
+          em = "\u2014"
+          assert em not in text, "em dash found in SKILL.md"
 
-body = parts[2].strip()
-assert len(body.splitlines()) >= 10, "skill body too short"
+          body = parts[2].strip()
+          assert len(body.splitlines()) >= 10, "skill body too short"
 
-readme = pathlib.Path("README.md").read_text(encoding="utf-8")
-assert "npx skills add" in readme, "README missing 'npx skills add'"
+          readme = pathlib.Path("README.md").read_text(encoding="utf-8")
+          assert "npx skills add" in readme, "README missing npx skills add"
 
-print("frontmatter OK")
-print("typography OK (no em dash)")
-print(f"body lines: {len(body.splitlines())}")
-print("install command present")
-print("VALIDATE OK")
-PY
+          print("frontmatter OK")
+          print("typography OK (no em dash)")
+          print("body lines: " + str(len(body.splitlines())))
+          print("install command present")
+          print("VALIDATE OK")
+          PY
