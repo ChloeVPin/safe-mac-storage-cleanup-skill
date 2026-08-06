@@ -1,0 +1,48 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Locate and validate the skill
+        run: python3 - <<'PY'
+import pathlib, sys, yaml
+
+skill = next(pathlib.Path(".").rglob("SKILL.md"), None)
+if skill is None:
+    print("ERROR: no SKILL.md found")
+    sys.exit(1)
+
+text = skill.read_text(encoding="utf-8")
+assert "---" in text, "SKILL.md missing frontmatter delimiters"
+
+meta_raw = text.split("---", 2)[1]
+meta = yaml.safe_load(meta_raw)
+assert "name" in meta, "frontmatter missing 'name'"
+assert "description" in meta, "frontmatter missing 'description'"
+print(f"frontmatter OK: {meta['name']}")
+
+em = "\u2014"
+assert em not in text, "em dash found in SKILL.md"
+print("typography OK (no em dash)")
+
+body = text.split("---", 2)[2].strip()
+assert len(body.splitlines()) >= 10, "skill body too short"
+print(f"body lines: {len(body.splitlines())}")
+
+readme = pathlib.Path("README.md").read_text(encoding="utf-8")
+assert "npx skills add" in readme, "README missing 'npx skills add'"
+print("install command present")
+print("VALIDATE OK")
+PY

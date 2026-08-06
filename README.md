@@ -10,16 +10,30 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-007AFF" alt="License" />
+    <img src="https://img.shields.io/badge/license-MIT-007AFF?style=flat" alt="License" />
   </a>
-  <img src="https://img.shields.io/badge/runtime-Zero%20Python%20deps-007AFF" alt="Zero Python Deps" />
+  <img src="https://img.shields.io/badge/runtime-Zero%20Python%20deps-007AFF?style=flat" alt="Zero Python Deps" />
   <a href="https://www.npmjs.com/package/cleanme">
-    <img src="https://img.shields.io/badge/npx-cleanme-007AFF" alt="npm package" />
+    <img src="https://img.shields.io/badge/npx-cleanme-007AFF?style=flat" alt="npm package" />
   </a>
-  <img src="https://img.shields.io/badge/platform-macOS-007AFF" alt="Platform macOS" />
+  <img src="https://img.shields.io/badge/platform-macOS-007AFF?style=flat" alt="Platform macOS" />
 </p>
 
 ---
+
+## Install
+
+Install with the Vercel skills CLI:
+
+```bash
+npx skills add ChloeVPin/safe-mac-storage-cleanup-skill
+```
+
+If you do not have Node.js, clone the repository and copy the `skills/cleanme` folder into your agent's skills directory:
+
+```bash
+git clone https://github.com/ChloeVPin/safe-mac-storage-cleanup-skill.git
+```
 
 ## Overview
 
